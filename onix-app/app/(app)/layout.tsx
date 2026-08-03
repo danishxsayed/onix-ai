@@ -1,0 +1,239 @@
+'use client';
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { logoutRequest } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/client';
+
+const NAV_SECTIONS = [
+  {
+    label: 'DEAL ROOM',
+    items: [
+      { href: '/dashboard', label: 'Dashboard',  icon: GridIcon,   count: null },
+      { href: '/pipeline',  label: 'Pipeline',   icon: FunnelIcon, count: 12   },
+    ],
+  },
+  {
+    label: 'COMING SOON',
+    items: [
+      { href: '#', label: 'Investors',  icon: UsersIcon,   count: 48 },
+      { href: '#', label: 'Outreach',   icon: MailIcon,    count: 7  },
+      { href: '#', label: 'AI Co-Pilot',icon: SparkIcon,   count: null },
+    ],
+  },
+  {
+    label: 'SETTINGS',
+    items: [
+      { href: '/profile', label: 'Profile', icon: PersonIcon, count: null },
+      { href: '#', label: 'Workspace',  icon: BuildingIcon,count: null },
+    ],
+  },
+];
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router   = useRouter();
+  const [initials, setInitials] = useState('U');
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const name = user.user_metadata?.full_name || user.email || '';
+      const init = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+      setInitials(init || 'U');
+    });
+  }, []);
+
+  async function handleLogout() {
+    await logoutRequest();
+    router.push('/login');
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--onix-dark)' }}>
+
+      {/* ── Sidebar ── */}
+      <aside
+        className="flex flex-col flex-shrink-0 overflow-y-auto"
+        style={{
+          width: '220px',
+          background: 'var(--onix-surface)',
+          borderRight: '1px solid var(--onix-border)',
+        }}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid var(--onix-border)' }}>
+          <Image src="/logo.png" alt="ONIX AI" width={80} height={28} style={{ objectFit: 'contain' }} />
+        </div>
+
+        {/* Nav */}
+        <nav className="flex flex-col gap-6 flex-1 px-3 py-5">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.label}>
+              <p
+                className="px-3 mb-2 text-xs font-semibold tracking-widest"
+                style={{ color: 'var(--onix-muted)' }}
+              >
+                {section.label}
+              </p>
+              {section.items.map((item) => {
+                const active = pathname === item.href;
+                const disabled = item.href === '#';
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg mb-0.5 text-sm font-medium transition-all"
+                    style={{
+                      color: active ? 'var(--onix-gold)' : disabled ? 'var(--onix-border)' : 'var(--onix-muted)',
+                      background: active ? 'rgba(201,168,76,0.1)' : 'transparent',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      pointerEvents: disabled ? 'none' : 'auto',
+                    }}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <item.icon size={16} />
+                      {item.label}
+                    </span>
+                    {item.count !== null && (
+                      <span
+                        className="text-xs px-1.5 py-0.5 rounded"
+                        style={{
+                          background: active ? 'rgba(201,168,76,0.2)' : 'var(--onix-card)',
+                          color: active ? 'var(--onix-gold)' : 'var(--onix-muted)',
+                        }}
+                      >
+                        {item.count}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Logout */}
+        <div className="px-3 py-4" style={{ borderTop: '1px solid var(--onix-border)' }}>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all"
+            style={{ color: 'var(--onix-muted)' }}
+          >
+            <LogoutIcon size={16} />
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+
+        {/* Topbar */}
+        <header
+          className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+          style={{
+            background: 'var(--onix-surface)',
+            borderBottom: '1px solid var(--onix-border)',
+            height: '64px',
+          }}
+        >
+          <div>
+            <h1 className="text-base font-semibold capitalize" style={{ color: 'var(--onix-text)' }}>
+              {pathname.replace('/', '')}
+            </h1>
+            <p className="text-xs" style={{ color: 'var(--onix-muted)' }}>
+              ONIX AI Deal Room
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link href="/profile">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer transition-opacity hover:opacity-80"
+                style={{ background: 'var(--onix-gold)', color: '#0D0D0D' }}
+                title="View profile"
+              >
+                {initials}
+              </div>
+            </Link>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ── Inline SVG icons ── */
+function GridIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+    </svg>
+  );
+}
+function FunnelIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+    </svg>
+  );
+}
+function UsersIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  );
+}
+function MailIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+  );
+}
+function SparkIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+    </svg>
+  );
+}
+function PersonIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  );
+}
+function BuildingIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9,22 9,12 15,12 15,22"/>
+    </svg>
+  );
+}
+function LogoutIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16,17 21,12 16,7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}

@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Onix AI Design Tokens */
+  --onix-gold:        #C9A84C;
+  --onix-gold-light:  #E8D5A0;
+  --onix-dark:        #0D0D0D;
+  --onix-surface:     #141414;
+  --onix-card:        #1A1A1A;
+  --onix-border:      #2A2A2A;
+  --onix-text:        #F0EDE6;
+  --onix-muted:       #8A8A8A;
+  --onix-green:       #2ECC8A;
+  --onix-amber:       #E8A730;
+  --onix-red:         #E05555;
+  --onix-blue:        #4A9EE8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
