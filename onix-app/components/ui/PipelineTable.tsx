@@ -7,7 +7,7 @@ interface PipelineTableProps {
 
 export default function PipelineTable({ deals, onAdvance }: PipelineTableProps) {
   return (
-    <table className="w-full text-sm" data-testid="pipeline-table">
+    <table className="w-full text-sm min-w-[600px]" data-testid="pipeline-table">
       <thead>
         <tr style={{ borderBottom: '1px solid var(--onix-border)' }}>
           {['Deal', 'Sector', 'Stage', 'Value', 'Fit Score', 'Agent'].map((h) => (

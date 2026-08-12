@@ -43,7 +43,7 @@ export default function DashboardPage() {
       )}
 
       {/* ── Metric Cards ── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {dashLoading ? (
           Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
         ) : dashError || !dash ? (
@@ -95,11 +95,11 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Pipeline Table + Readiness ── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* Pipeline Table */}
         <div
-          className="col-span-2 rounded-xl overflow-hidden"
+          className="col-span-1 md:col-span-2 rounded-xl overflow-hidden"
           style={{ background: 'var(--onix-card)', border: '1px solid var(--onix-border)' }}
         >
           <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--onix-border)' }}>

@@ -60,7 +60,7 @@ export default function PipelinePage() {
     <div className="flex flex-col gap-6">
 
       {/* ── Metric Cards ── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
         ) : (
@@ -81,7 +81,7 @@ export default function PipelinePage() {
         <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--onix-text)' }}>
           Pipeline Stages
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {STAGES.map((stage) => {
             const active = activeStage === stage;
             return (
@@ -134,7 +134,8 @@ export default function PipelinePage() {
         )}
 
         {isLoading ? (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--onix-border)' }}>
@@ -147,8 +148,11 @@ export default function PipelinePage() {
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
-          <PipelineTable deals={filtered} onAdvance={(id) => advanceMutation.mutate(id)} />
+          <div className="overflow-x-auto">
+            <PipelineTable deals={filtered} onAdvance={(id) => advanceMutation.mutate(id)} />
+          </div>
         )}
       </div>
 

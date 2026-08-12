@@ -6,36 +6,39 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { logoutRequest } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
+import { useTheme } from '@/lib/theme';
 
 const NAV_SECTIONS = [
   {
     label: 'DEAL ROOM',
     items: [
-      { href: '/dashboard', label: 'Dashboard',  icon: GridIcon,   count: null },
-      { href: '/pipeline',  label: 'Pipeline',   icon: FunnelIcon, count: 12   },
+      { href: '/dashboard', label: 'Dashboard',   icon: GridIcon,    count: null },
+      { href: '/pipeline',  label: 'Pipeline',    icon: FunnelIcon,  count: null },
     ],
   },
   {
     label: 'COMING SOON',
     items: [
-      { href: '#', label: 'Investors',  icon: UsersIcon,   count: 48 },
-      { href: '#', label: 'Outreach',   icon: MailIcon,    count: 7  },
-      { href: '#', label: 'AI Co-Pilot',icon: SparkIcon,   count: null },
+      { href: '#', label: 'Investors',   icon: UsersIcon,    count: null },
+      { href: '#', label: 'Outreach',    icon: MailIcon,     count: null },
+      { href: '#', label: 'AI Co-Pilot', icon: SparkIcon,    count: null },
     ],
   },
   {
     label: 'SETTINGS',
     items: [
-      { href: '/profile', label: 'Profile', icon: PersonIcon, count: null },
-      { href: '#', label: 'Workspace',  icon: BuildingIcon,count: null },
+      { href: '/profile', label: 'Profile',   icon: PersonIcon,   count: null },
+      { href: '#',        label: 'Workspace', icon: BuildingIcon, count: null },
     ],
   },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router   = useRouter();
-  const [initials, setInitials] = useState('U');
+  const pathname           = usePathname();
+  const router             = useRouter();
+  const { theme, toggle }  = useTheme();
+  const [initials, setInitials]       = useState('U');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -47,6 +50,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => { setSidebarOpen(false); }, [pathname]);
+
   async function handleLogout() {
     await logoutRequest();
     router.push('/login');
@@ -55,9 +61,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--onix-dark)' }}>
 
+      {/* ── Mobile overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 md:hidden"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar ── */}
       <aside
-        className="flex flex-col flex-shrink-0 overflow-y-auto"
+        className={`
+          fixed md:static inset-y-0 left-0 z-40
+          flex flex-col flex-shrink-0 overflow-y-auto
+          transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
         style={{
           width: '220px',
           background: 'var(--onix-surface)',
@@ -73,14 +93,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-col gap-6 flex-1 px-3 py-5">
           {NAV_SECTIONS.map((section) => (
             <div key={section.label}>
-              <p
-                className="px-3 mb-2 text-xs font-semibold tracking-widest"
-                style={{ color: 'var(--onix-muted)' }}
-              >
+              <p className="px-3 mb-2 text-xs font-semibold tracking-widest" style={{ color: 'var(--onix-muted)' }}>
                 {section.label}
               </p>
               {section.items.map((item) => {
-                const active = pathname === item.href;
+                const active   = pathname === item.href;
                 const disabled = item.href === '#';
                 return (
                   <Link
@@ -88,10 +105,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg mb-0.5 text-sm font-medium transition-all"
                     style={{
-                      color: active ? 'var(--onix-gold)' : disabled ? 'var(--onix-border)' : 'var(--onix-muted)',
-                      background: active ? 'rgba(201,168,76,0.1)' : 'transparent',
-                      cursor: disabled ? 'not-allowed' : 'pointer',
-                      pointerEvents: disabled ? 'none' : 'auto',
+                      color:          active ? 'var(--onix-gold)' : disabled ? 'var(--onix-border)' : 'var(--onix-muted)',
+                      background:     active ? 'rgba(201,168,76,0.1)' : 'transparent',
+                      cursor:         disabled ? 'not-allowed' : 'pointer',
+                      pointerEvents:  disabled ? 'none' : 'auto',
                     }}
                   >
                     <span className="flex items-center gap-2.5">
@@ -103,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         className="text-xs px-1.5 py-0.5 rounded"
                         style={{
                           background: active ? 'rgba(201,168,76,0.2)' : 'var(--onix-card)',
-                          color: active ? 'var(--onix-gold)' : 'var(--onix-muted)',
+                          color:      active ? 'var(--onix-gold)' : 'var(--onix-muted)',
                         }}
                       >
                         {item.count}
@@ -130,27 +147,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ── Main ── */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
         {/* Topbar */}
         <header
-          className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+          className="flex items-center justify-between px-4 md:px-6 py-4 flex-shrink-0"
           style={{
-            background: 'var(--onix-surface)',
+            background:   'var(--onix-surface)',
             borderBottom: '1px solid var(--onix-border)',
-            height: '64px',
+            height:       '64px',
           }}
         >
-          <div>
-            <h1 className="text-base font-semibold capitalize" style={{ color: 'var(--onix-text)' }}>
-              {pathname.replace('/', '')}
-            </h1>
-            <p className="text-xs" style={{ color: 'var(--onix-muted)' }}>
-              ONIX AI Deal Room
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile only */}
+            <button
+              className="md:hidden flex flex-col gap-1.5 p-1"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <span className="block w-5 h-0.5" style={{ background: 'var(--onix-muted)' }} />
+              <span className="block w-5 h-0.5" style={{ background: 'var(--onix-muted)' }} />
+              <span className="block w-5 h-0.5" style={{ background: 'var(--onix-muted)' }} />
+            </button>
+
+            <div>
+              <h1 className="text-sm md:text-base font-semibold capitalize" style={{ color: 'var(--onix-text)' }}>
+                {pathname.replace('/', '') || 'Home'}
+              </h1>
+              <p className="text-xs hidden sm:block" style={{ color: 'var(--onix-muted)' }}>
+                ONIX AI Deal Room
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Theme toggle */}
+            <button
+              onClick={toggle}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+              style={{ background: 'var(--onix-card)', border: '1px solid var(--onix-border)', color: 'var(--onix-muted)' }}
+            >
+              {theme === 'dark' ? <SunIcon size={15} /> : <MoonIcon size={15} />}
+            </button>
+
+            {/* Avatar */}
             <Link href="/profile">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer transition-opacity hover:opacity-80"
@@ -164,7 +205,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
       </div>
@@ -234,6 +275,24 @@ function LogoutIcon({ size = 16 }: { size?: number }) {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
       <polyline points="16,17 21,12 16,7"/>
       <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}
+function SunIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
+function MoonIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
   );
 }
